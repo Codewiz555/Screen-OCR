@@ -1,7 +1,8 @@
 # Screen-OCR
 A simple interactive screen capture application use to copy text form any window. 
-Add files via upload
-steps 
+
+
+**steps **
 1.Install Python (3.8+)
 2.Install Tesseract OCR:
 
