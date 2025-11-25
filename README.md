@@ -2,6 +2,8 @@
 
 A simple interactive screen capture application to copy text from any window.
 
+**Download** exe for win: https://drive.google.com/file/d/1Virc39asR_F1s4TsY7fuL9rJppLf7nPI/view?usp=drive_link
+
 ## Features
 - Select any region on screen to extract text
 - Supports printed text, handwriting (basic), and Kannada
