@@ -1,18 +1,44 @@
 # Screen-OCR
-A simple interactive screen capture application use to copy text form any window. 
 
+A simple interactive screen capture application to copy text from any window.
 
-**steps **
-1.Install Python (3.8+)
+## Features
+- Select any region on screen to extract text
+- Supports printed text, handwriting (basic), and Kannada
+- Floating window with keyboard shortcut (Ctrl+Shift+S)
+- Copy extracted text to clipboard
 
-2.Install Tesseract OCR:
+## Installation Steps
 
-Download from: https://github.com/UB-Mannheim/tesseract/wiki
+1. **Install Python (3.8+)**
 
-3. Install, note the path (e.g., C:\Program Files\Tesseract-OCR\tesseract.exe)
-   
-4. Install Python libraries:
-pip install PyQt5 mss pytesseract Pillow pyperclip
+2. **Install Tesseract OCR:**
+   - Download from: https://github.com/UB-Mannheim/tesseract/wiki
+   - Install and note the path (e.g., `C:\Program Files\Tesseract-OCR\tesseract.exe`)
 
-6. Set Tesseract path in code:
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+3. **Install Python libraries:**
+```bash
+   pip install PyQt5 pyautogui pytesseract Pillow pyperclip opencv-python
+```
+
+4. **Update Tesseract path in code (line 13):**
+```python
+   pytesseract.pytesseract.tesseract_cmd = r'C:\Users\YOUR_PATH\Tesseract-OCR\tesseract.exe'
+```
+
+5. **Run:**
+```bash
+   python screen_ocr.py
+```
+
+## Usage
+- Click "Select Region" or press `Ctrl+Shift+S`
+- Drag to select area on screen
+- Text appears in window - select and copy
+
+## Build Executable
+```bash
+pip install pyinstaller
+pyinstaller --onefile --windowed screen_ocr.py
+```
+Executable will be in `dist/` folder.
