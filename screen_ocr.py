@@ -1,12 +1,14 @@
 import sys
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, 
-                             QTextEdit, QVBoxLayout, QWidget, QLabel, QShortcut)
+                             QTextEdit, QVBoxLayout, QWidget, QLabel, QShortcut, QComboBox)
 from PyQt5.QtCore import Qt, QRect, QPoint
 from PyQt5.QtGui import QPainter, QColor, QPen, QKeySequence
 import pyautogui
 import pytesseract
-from PIL import Image
+from PIL import Image, ImageEnhance, ImageFilter
 import pyperclip
+import cv2
+import numpy as np
 
 # Set Tesseract path
 pytesseract.pytesseract.tesseract_cmd = r'C:\Users\AQUA\AppData\Local\Programs\Tesseract-OCR\tesseract.exe'
@@ -66,8 +68,8 @@ class ScreenOCRApp(QMainWindow):
         self.initUI()
         
     def initUI(self):
-        self.setWindowTitle('Screen OCR Text Extractor')
-        self.setGeometry(100, 100, 600, 400)
+        self.setWindowTitle('Screen OCR - Enhanced')
+        self.setGeometry(100, 100, 600, 500)
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         self.dragging = False
         self.offset = QPoint()
@@ -75,8 +77,13 @@ class ScreenOCRApp(QMainWindow):
         main_widget = QWidget()
         layout = QVBoxLayout()
         
-        self.label = QLabel('Click "Select Region" or press Ctrl+Shift+S to capture')
+        self.label = QLabel('Select mode, then Ctrl+Shift+S to capture')
         layout.addWidget(self.label)
+        
+        # Mode selector
+        self.mode_combo = QComboBox()
+        self.mode_combo.addItems(['Printed Text', 'Handwriting (Enhanced)', 'Kannada'])
+        layout.addWidget(self.mode_combo)
         
         self.capture_btn = QPushButton('Select Region to Capture')
         self.capture_btn.clicked.connect(self.start_selection)
@@ -107,6 +114,28 @@ class ScreenOCRApp(QMainWindow):
         self.hide()
         self.overlay = SelectionOverlay(self)
         self.overlay.show()
+    
+    def preprocess_handwriting(self, img):
+        """Enhanced preprocessing for handwriting"""
+        # Convert to numpy array
+        img_array = np.array(img)
+        
+        # Convert to grayscale
+        gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
+        
+        # Enhance contrast
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+        enhanced = clahe.apply(gray)
+        
+        # Denoise
+        denoised = cv2.fastNlMeansDenoising(enhanced)
+        
+        # Adaptive threshold
+        binary = cv2.adaptiveThreshold(denoised, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                                       cv2.THRESH_BINARY, 11, 2)
+        
+        # Convert back to PIL
+        return Image.fromarray(binary)
         
     def process_image(self, img):
         self.show()
@@ -114,9 +143,28 @@ class ScreenOCRApp(QMainWindow):
         QApplication.processEvents()
         
         try:
-            text = pytesseract.image_to_string(img)
+            mode = self.mode_combo.currentText()
+            
+            if 'Handwriting' in mode:
+                # Enhanced preprocessing for handwriting
+                processed_img = self.preprocess_handwriting(img)
+                # PSM 6 for single block of text, --oem 1 for LSTM
+                custom_config = r'--oem 1 --psm 6'
+                text = pytesseract.image_to_string(processed_img, config=custom_config)
+                
+            elif 'Kannada' in mode:
+                # Kannada with basic enhancement
+                enhancer = ImageEnhance.Contrast(img)
+                img = enhancer.enhance(2)
+                text = pytesseract.image_to_string(img, lang='kan')
+                
+            else:
+                # Standard printed text
+                text = pytesseract.image_to_string(img)
+            
             self.text_area.setText(text)
             self.label.setText('Text extracted! Select and copy what you need.')
+            
         except Exception as e:
             self.label.setText(f'Error: {str(e)}')
             self.text_area.setText(f'Error: {str(e)}')
